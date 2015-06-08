@@ -63,6 +63,6 @@ class firewalld::lockdown_whitelist(
       group   => root,
       mode    => '0644',
       require => Package['firewalld'],
-      notify  => Service['firewalld'],
+      notify  => Exec['firewalld::reload'], # reload service
   }
 }

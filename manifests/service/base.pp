@@ -30,6 +30,6 @@ class firewalld::service::base {
     group   => root,
     mode    => '0750',
     require => Package['firewalld'],
-    notify  => Service['firewalld'],
+    notify  => Exec['firewalld::reload'], # reload service
   }
 }
