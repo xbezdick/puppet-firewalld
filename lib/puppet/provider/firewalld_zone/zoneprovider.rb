@@ -4,200 +4,220 @@ require 'rexml/document'
 include REXML
 
 Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Provider::Firewalld do
-    @doc = "The zone config manipulator"
+  @doc = "The zone config manipulator"
 
-    commands :firewall => 'firewall-cmd'
+  commands :firewall => 'firewall-cmd'
 
-    mk_resource_methods
+  mk_resource_methods
 
-    def flush
-        Puppet.debug "firewalld zone provider: flushing (#{@resource[:name]})"
-	write_zonefile
-    end
+  def flush
+      Puppet.debug "firewalld zone provider: flushing (#{@resource[:name]})"
+      write_zonefile
+  end
 
-    def create
-        Puppet.debug "firewalld zone provider: create (#{@resource[:name]})"
-	write_zonefile
-    end
+  def create
+      Puppet.debug "firewalld zone provider: create (#{@resource[:name]})"
+      write_zonefile
+  end
 
-    def write_zonefile
-        Puppet.debug "firewalld zone provider: write_zonefile (#{@resource[:name]})"
-        doc = REXML::Document.new
-        zone = doc.add_element 'zone'
-        doc << REXML::XMLDecl.new(version='1.0',encoding='utf-8')
+  def write_zonefile
+      Puppet.debug "firewalld zone provider: write_zonefile (#{@resource[:name]})"
+      doc = REXML::Document.new
+      zone = doc.add_element 'zone'
+      doc << REXML::XMLDecl.new(version='1.0',encoding='utf-8')
 
-        if @resource[:target]
-          zone.add_attribute('target', @resource[:target])
+      if @resource[:target]
+        zone.add_attribute('target', @resource[:target])
+      end
+
+      if @resource[:short]
+        short = zone.add_element 'short'
+        short.text = @resource[:short]
+      end
+
+      if @resource[:description]
+        description = zone.add_element 'description'
+        description.text = @resource[:description]
+      end
+
+      if @resource[:interfaces]
+        @resource[:interfaces].each do |interface|
+          begin
+            Puppet.debug "should be switching zone of interface: " + interface
+            zoneofinterface = exec_firewall('--get-zone-of-interface', interface)
+            if (zoneofinterface.strip != @resource[:name])
+              exec_firewall('--permanent', '--zone',zoneofinterface.strip, '--remove-interface', interface)
+              exec_firewall('--zone', @resource[:name], '--change-interface', interface)
+            end
+          rescue Exception => bang
+            #puts bang.message
+          end
+
+          iface = zone.add_element 'interface'
+          iface.add_attribute('name', interface)
         end
+      end
 
-        if @resource[:short]
-          short = zone.add_element 'short'
-          short.text = @resource[:short]
+      if @resource[:sources]
+        @resource[:sources].each do |source|
+          # TODO: firewall-cmd --get-zone-of-source...
+          src = zone.add_element 'source'
+          src.add_attribute('address', source)
         end
+      end
 
-        if @resource[:description]
-          description = zone.add_element 'description'
-          description.text = @resource[:description]
+      if @resource[:services]
+        @resource[:services].each do |service|
+          srv = zone.add_element 'service'
+          srv.add_attribute('name', service)
+          Puppet.debug "firewalld zone provider: adding service (#{service}) to zone"
         end
+      end
 
-        if @resource[:interfaces]
-          @resource[:interfaces].each do |interface|
-            # TODO: firewall-cmd --get-zone-of-interface...
-            iface = zone.add_element 'interface'
-            iface.add_attribute('name', interface)
+      if @resource[:ports]
+        @resource[:ports].each do |port|
+          prt = zone.add_element 'port'
+          prt.add_attribute('port', port['port'])
+          prt.add_attribute('protocol', port['protocol'])
+        end
+      end
+
+      if @resource[:icmp_blocks]
+        @resource[:icmp_blocks].each do |icmp_block|
+          iblk = zone.add_element 'icmp-block'
+          iblk.add_attribute('name', icmp_block)
+        end
+      end
+
+      if @resource[:masquerade]
+        if @resource[:masquerade].at(0).to_s == 'true'
+          zone.add_element 'masquerade'
+        end
+      end
+
+      if @resource[:forward_ports]
+        @resource[:forward_ports].each do |forward_port|
+          fw_prt = zone.add_element 'forward-port'
+          fw_prt.add_attribute('port', forward_port['port'])
+          fw_prt.add_attribute('protocol', forward_port['protocol'])
+          if forward_port['to_port']
+            fw_prt.add_attribute('to-port', forward_port['to_port'])
+          end
+          if forward_port['to_addr']
+            fw_prt.add_attribute('to-addr', forward_port['to_addr'])
           end
         end
+      end
 
-        if @resource[:sources]
-          @resource[:sources].each do |source|
-            # TODO: firewall-cmd --get-zone-of-source...
-            src = zone.add_element 'source'
-            src.add_attribute('address', source)
+      if @resource[:rich_rules]
+        @resource[:rich_rules].each do |rich_rule|
+          rule = zone.add_element 'rule'
+          if rich_rule['family']
+            rule.add_attribute('family', rich_rule['family'])
           end
-        end
 
-        if @resource[:services]
-          @resource[:services].each do |service|
-            srv = zone.add_element 'service'
-            srv.add_attribute('name', service)
-            Puppet.debug "firewalld zone provider: adding service (#{service}) to zone"
+          if rich_rule['source']
+            source = rule.add_element 'source'
+            source.add_attribute('address', rich_rule['source']['address'])
+            source.add_attribute('invert', rich_rule['source']['invert'])
           end
-        end
 
-        if @resource[:ports]
-          @resource[:ports].each do |port|
-            prt = zone.add_element 'port'
-            prt.add_attribute('port', port['port'])
-            prt.add_attribute('protocol', port['protocol'])
+          if rich_rule['destination']
+            dest = rule.add_element 'destination'
+            dest.add_attribute('address', rich_rule['destination']['address'])
+            dest.add_attribute('invert', rich_rule['destination']['invert'])
           end
-        end
 
-        if @resource[:icmp_blocks]
-          @resource[:icmp_blocks].each do |icmp_block|
-            iblk = zone.add_element 'icmp-block'
-            iblk.add_attribute('name', icmp_block)
+          if rich_rule['service']
+            service = rule.add_element 'service'
+            service.add_attribute('name', rich_rule['service'])
           end
-        end
 
-        if @resource[:masquerade]
-          if @resource[:masquerade].at(0).to_s == 'true'
-            zone.add_element 'masquerade'
+          if rich_rule['port']
+            port = rule.add_element 'port'
+            port.add_attribute('port', rich_rule['port']['portid'])
+            port.add_attribute('protocol', rich_rule['port']['protocol'])
           end
-        end
 
-        if @resource[:forward_ports]
-          @resource[:forward_ports].each do |forward_port|
-            fw_prt = zone.add_element 'forward-port'
-            fw_prt.add_attribute('port', forward_port['port'])
-            fw_prt.add_attribute('protocol', forward_port['protocol'])
-            if forward_port['to_port']
-              fw_prt.add_attribute('to-port', forward_port['to_port'])
+          if rich_rule['protocol']
+            protocol = rule.add_element 'protocol'
+            protocol.add_attribute('value', rich_rule['protocol'])
+          end
+
+          if rich_rule['icmp_block']
+            icmp_block = rule.add_element 'icmp-block'
+            icmp_block.add_attribute('name', rich_rule['icmp_block'])
+          end
+
+          if rich_rule['masquerade']
+            rule.add_element 'masquerade'
+          end
+
+          if rich_rule['forward_port']
+            fw_port = rule.add_element 'forward-port'
+            fw_port.add_attribute('port', rich_rule['forward_port']['portid'])
+            fw_port.add_attribute('protocol', rich_rule['forward_port']['protocol'])
+            if rich_rule['forward_port']['to_port']
+              fw_port.add_attribute('to-port', rich_rule['forward_port']['to_port'])
             end
-            if forward_port['to_addr']
-              fw_prt.add_attribute('to-addr', forward_port['to_addr'])
+            if rich_rule['forward_port']['to_addr']
+              fw_port.add_attribute('to-addr', rich_rule['forward_port']['to_addr'])
             end
           end
-        end
 
-        if @resource[:rich_rules]
-          @resource[:rich_rules].each do |rich_rule|
-            rule = zone.add_element 'rule'
-            if rich_rule['family']
-              rule.add_attribute('family', rich_rule['family'])
+          if rich_rule['log']
+            log = rule.add_element 'log'
+            if rich_rule['log']['prefix']
+              log.add_attribute('prefix', rich_rule['log']['prefix'])
             end
-
-            if rich_rule['source']
-              source = rule.add_element 'source'
-              source.add_attribute('address', rich_rule['source']['address'])
-              source.add_attribute('invert', rich_rule['source']['invert'])
+            if rich_rule['log']['level']
+              log.add_attribute('level', rich_rule['log']['level'])
             end
-
-            if rich_rule['destination']
-              dest = rule.add_element 'destination'
-              dest.add_attribute('address', rich_rule['destination']['address'])
-              dest.add_attribute('invert', rich_rule['destination']['invert'])
+            if rich_rule['log']['limit']
+              limit = log.add_element 'limit'
+              limit.add_attribute('value', rich_rule['log']['limit'])
             end
+          end
 
-            if rich_rule['service']
-              service = rule.add_element 'service'
-              service.add_attribute('name', rich_rule['service'])
+          if rich_rule['audit']
+            audit = rule.add_element 'audit'
+            if rich_rule['audit']['limit']
+              limit = audit.add_element 'limit'
+              limit.add_attribute('value', rich_rule['audit']['limit'])
             end
+          end
 
-            if rich_rule['port']
-              port = rule.add_element 'port'
-              port.add_attribute('port', rich_rule['port']['portid'])
-              port.add_attribute('protocol', rich_rule['port']['protocol'])
+          if rich_rule['action']
+            action = rule.add_element rich_rule['action']['action_type']
+            if rich_rule['action']['reject_type']
+              action.add_attribute('type', rich_rule['action']['reject_type'])
             end
-
-            if rich_rule['protocol']
-              protocol = rule.add_element 'protocol'
-              protocol.add_attribute('value', rich_rule['protocol'])
-            end
-
-            if rich_rule['icmp_block']
-              icmp_block = rule.add_element 'icmp-block'
-              icmp_block.add_attribute('name', rich_rule['icmp_block'])
-            end
-
-            if rich_rule['masquerade']
-              rule.add_element 'masquerade'
-            end
-
-            if rich_rule['forward_port']
-              fw_port = rule.add_element 'forward-port'
-              fw_port.add_attribute('port', rich_rule['forward_port']['portid'])
-              fw_port.add_attribute('protocol', rich_rule['forward_port']['protocol'])
-              if rich_rule['forward_port']['to_port']
-                fw_port.add_attribute('to-port', rich_rule['forward_port']['to_port'])
-              end
-              if rich_rule['forward_port']['to_addr']
-                fw_port.add_attribute('to-addr', rich_rule['forward_port']['to_addr'])
-              end
-            end
-
-            if rich_rule['log']
-              log = rule.add_element 'log'
-              if rich_rule['log']['prefix']
-                log.add_attribute('prefix', rich_rule['log']['prefix'])
-              end
-              if rich_rule['log']['level']
-                log.add_attribute('level', rich_rule['log']['level'])
-              end
-              if rich_rule['log']['limit']
-                limit = log.add_element 'limit'
-                limit.add_attribute('value', rich_rule['log']['limit'])
-              end
-            end
-
-            if rich_rule['audit']
-              audit = rule.add_element 'audit'
-              if rich_rule['audit']['limit']
-                limit = audit.add_element 'limit'
-                limit.add_attribute('value', rich_rule['audit']['limit'])
-              end
-            end
-
-            if rich_rule['action']
-              action = rule.add_element rich_rule['action']['action_type']
-              if rich_rule['action']['reject_type']
-                action.add_attribute('type', rich_rule['action']['reject_type'])
-              end
-              if rich_rule['action']['limit']
-                limit = action.add_element 'limit'
-                limit.add_attribute('value', rich_rule['action']['limit'])
-              end
+            if rich_rule['action']['limit']
+              limit = action.add_element 'limit'
+              limit.add_attribute('value', rich_rule['action']['limit'])
             end
           end
         end
+      end
 
-        path = '/etc/firewalld/zones/' + @resource[:name] + '.xml'
-        file = File.open(path, "w+")
-	doc.write( file, 2 )
-        file.close
-        Puppet.debug "firewalld zone provider: Changes to #{path} configuration saved to disk."
-        firewall('--reload')
-        Puppet.debug "firewalld zone provider: reloading firewalld configuration"
-    end
+      path = '/etc/firewalld/zones/' + @resource[:name] + '.xml'
+      file = File.open(path, "w+")
+      fmt = REXML::Formatters::Pretty.new
+      fmt.compact = true
+      fmt.write(doc, file)
+      file.close
+      Puppet.debug "firewalld zone provider: Changes to #{path} configuration saved to disk."
+      #Reload is now done from a notify command in the puppet code
+  end
+
+  # Utilized code from crayfishx/puppet-firewalld as the firewall-cmd needs it's arguments properly formatted from this ruby code, and this function does it well, fixes issues that arose from doing firewall('--permanent --zone=foo --remove-interface=lo')
+  # So now use exec_firewall('--permanent', '--zone', zonevar, '--remove-interface', interfacevar)
+  def exec_firewall(*extra_args)
+      args=[]
+      args << extra_args
+      args.flatten!
+      firewall(args)
+  end
 
   def self.instances
     debug "[instances]"
@@ -282,7 +302,11 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
             rule_log = {}
             rule_audit = {}
             rule_action = {}
-            rule_family = 'ipv4'
+            # Changed rule_family to blank to start as it is an optional variable and should be treated as such for consistency
+            rule_family = ''
+
+            # family is a rule attribute rather than an element and therefore must happen prior to the elements loop
+            rule_family = e.attributes["family"].nil? ? nil : e.attributes["family"]
 
           e.elements.each do |rule|
             if rule.name == 'source'
@@ -369,9 +393,6 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
               rule_action['reject_type'] = nil
               rule_action['limit']  = limit
             end
-            if rule.name == 'family'
-              rule_family = rule.attributes["type"].nil? ? nil : rule.attributes["family"]
-            end
           end
           rich_rules << {
             'source'        => rule_source.empty? ? nil : rule_source,
@@ -394,7 +415,22 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
            rich_rules.each { |a| a.delete_if { |key,value| key == 'protocol' and value == nil} }
            rich_rules.each { |a| a.delete_if { |key,value| key == 'icmp_block' and value == nil} }
            rich_rules.each { |a| a.delete_if { |key,value| key == 'masquerade' and value == false} }
+           rich_rules.each { |a| a.delete_if { |key,value| key == 'audit' and value == nil} }
+           rich_rules.each { |a| a.delete_if { |key,value| key == 'log' and value == nil} }
+           rich_rules.each { |a| a.delete_if { |key,value| key == 'destination' and value == nil} }
+           rich_rules.each { |a| a.delete_if { |key,value| key == 'source' and value == nil} }
            rich_rules.each { |a| a.delete_if { |key,value| key == 'port' and value == nil} }
+           rich_rules.each { |a| a.delete_if { |key,value| key == 'family' and value == nil} }
+
+           rich_rules.each { |rr|
+             if rr["action"]
+               rr["action"].delete_if {|key,value| key == 'limit' and value == nil}
+               rr["action"].delete_if {|key,value| key == 'reject_type' and value == nil}
+             end
+             if rr["forward_port"]
+               rr["forward_port"].delete_if {|key,value| key == 'to_addr' and value == nil}
+             end
+           }
         end
 
       end
