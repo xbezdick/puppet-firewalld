@@ -51,7 +51,7 @@ class firewalld {
 
   exec{ 'firewalld::reload':
     path        =>'/usr/bin:/bin',
-    command     => 'firewall-cmd --complete-reload',
+    command     => 'firewall-cmd --reload',
     refreshonly => true,
   }
 
