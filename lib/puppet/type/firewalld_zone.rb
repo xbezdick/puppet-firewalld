@@ -71,7 +71,7 @@ Puppet::Type.newtype(:firewalld_zone) do
     end
   end 
 
-  newparam(:target) do
+  newproperty(:target) do
     desc <<-EOT
       Can be one of {'ACCEPT', '%%REJECT%%', 'DROP'}.
       Used to accept, reject or drop every packet that 
@@ -81,7 +81,7 @@ Puppet::Type.newtype(:firewalld_zone) do
     newvalues('ACCEPT', '%%REJECT%%', 'DROP')
   end
 
-  newparam(:short) do
+  newproperty(:short) do
       desc "short readable name"
   end
 
@@ -198,6 +198,7 @@ Puppet::Type.newtype(:firewalld_zone) do
               limit       => string, optional
             }
       EOT
+
   end
 
 end
