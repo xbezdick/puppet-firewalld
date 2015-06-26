@@ -117,6 +117,7 @@
 #      },],}
 #
 define firewalld::zone(
+  $ensure = present,
   $target = undef,
   $short = '',
   $description = '',
@@ -132,23 +133,27 @@ define firewalld::zone(
 
   include firewalld::zone::base
   include firewalld::configuration
-
-  firewalld_zone { $name:
-    target        => $target,
-    short         => $short,
-    description   => $description,
-    interfaces    => $interfaces,
-    sources       => $sources,
-    ports         => $ports,
-    services      => $services,
-    icmp_blocks   => $icmp_blocks,
-    masquerade    => $masquerade,
-    forward_ports => $forward_ports,
-    rich_rules    => $rich_rules,
+  if $ensure == present {
+    firewalld_zone { $name:
+      target        => $target,
+      short         => $short,
+      description   => $description,
+      interfaces    => $interfaces,
+      sources       => $sources,
+      ports         => $ports,
+      services      => $services,
+      icmp_blocks   => $icmp_blocks,
+      masquerade    => $masquerade,
+      forward_ports => $forward_ports,
+      rich_rules    => $rich_rules,
+      notify        => Exec['firewalld::reload'],
+    }
   }
   #Ensure the zone file is present and not destroyed if purge_zones is set to true
+  #Also Ensure that the file can be set to absent and deleted if purge_zones is set to false
   file { "/etc/firewalld/zones/${name}.xml":
-    ensure  => present
+    ensure  => $ensure,
+    notify  => Exec['firewalld::reload'],
   }
 }
 
