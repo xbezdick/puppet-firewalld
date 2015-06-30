@@ -312,9 +312,9 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
             if rule.name == 'source'
               rule_source['address'] = rule.attributes["address"]
               if rule.attributes["invert"] == 'true'
-                rule_source['invert'] = true
+                rule_source['invert'] = 'true'
               else
-                rule_source['invert'] = rule.attributes["invert"].nil? ? nil : false
+                rule_source['invert'] = rule.attributes["invert"].nil? ? nil : 'false'
               end
               rule_source.delete_if { |key,value| key == 'invert' and value == nil}
 
