@@ -56,7 +56,7 @@ Puppet::Type.newtype(:firewalld_zone) do
           ],
        }
   EOT
- 
+
   ensurable
 
   newparam(:name) do
@@ -78,7 +78,21 @@ Puppet::Type.newtype(:firewalld_zone) do
       doesn't match any rule (port, service, etc.).
       Default (when target is not specified) is reject.
     EOT
-    newvalues('ACCEPT', '%%REJECT%%', 'DROP')
+    newvalues('ACCEPT', '%%REJECT%%', 'DROP', '')
+    def insync?(is)
+      self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+      if @should.empty? && is == :absent then
+        return true
+      end
+
+      if match_all? then
+        return false unless is.is_a? Array
+        return false unless is.length == @should.length
+        return (is == @should or is == @should.map(&:to_s))
+      else
+        return @should.any? {|want| property_matches?(is, want) }
+      end
+    end
   end
 
   newproperty(:short) do
@@ -91,6 +105,20 @@ Puppet::Type.newtype(:firewalld_zone) do
 
   newproperty(:interfaces, :array_matching => :all) do
       desc "list of interfaces to bind to a zone"
+      def insync?(is)
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+        if @should.empty? && is == :absent then
+          return true
+        end
+
+        if match_all? then
+          return false unless is.is_a? Array
+          return false unless is.length == @should.length
+          return (is == @should or is == @should.map(&:to_s))
+        else
+          return @should.any? {|want| property_matches?(is, want) }
+        end
+      end
   end
 
   newproperty(:sources, :array_matching => :all) do
@@ -98,6 +126,20 @@ Puppet::Type.newtype(:firewalld_zone) do
         list of source addresses or source address
         ranges ("address/mask") to bind to a zone
       EOT
+      def insync?(is)
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+        if @should.empty? && is == :absent then
+          return true
+        end
+
+        if match_all? then
+          return false unless is.is_a? Array
+          return false unless is.length == @should.length
+          return (is == @should or is == @should.map(&:to_s))
+        else
+          return @should.any? {|want| property_matches?(is, want) }
+        end
+      end
   end
 
   newproperty(:ports, :array_matching => :all) do
@@ -111,21 +153,77 @@ Puppet::Type.newtype(:firewalld_zone) do
             ...
           ]
       EOT
+      def insync?(is)
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+        if @should.empty? && is == :absent then
+          return true
+        end
 
+        if match_all? then
+          return false unless is.is_a? Array
+          return false unless is.length == @should.length
+          return (is == @should or is == @should.map(&:to_s))
+        else
+          return @should.any? {|want| property_matches?(is, want) }
+        end
+      end
   end
 
   newproperty(:services, :array_matching => :all) do
       desc "list of predefined firewalld services"
+
+      def insync?(is)
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+        if @should.empty? && is == :absent then
+          return true
+        end
+
+        if match_all? then
+          return false unless is.is_a? Array
+          return false unless is.length == @should.length
+          return (is == @should or is == @should.map(&:to_s))
+        else
+          return @should.any? {|want| property_matches?(is, want) }
+        end
+      end
   end
 
   newproperty(:icmp_blocks, :array_matching => :all) do
       desc "list of predefined icmp-types to block"
-  end
+      def insync?(is)
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+        if @should.empty? && is == :absent then
+          return true
+        end
+
+        if match_all? then
+          return false unless is.is_a? Array
+          return false unless is.length == @should.length
+          return (is == @should or is == @should.map(&:to_s))
+        else
+          return @should.any? {|want| property_matches?(is, want) }
+        end
+      end
+   end
 
   newproperty(:masquerade, :array_matching => :all) do
       desc "enable masquerading ?"
       newvalues(:true, :false)
       defaultto false
+      def insync?(is)
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+        if @should.empty? && is == :absent then
+          return true
+        end
+
+        if match_all? then
+          return false unless is.is_a? Array
+          return false unless is.length == @should.length
+          return (is == @should or is == @should.map(&:to_s))
+        else
+          return @should.any? {|want| property_matches?(is, want) }
+        end
+      end
   end
 
   newproperty(:forward_ports, :array_matching => :all) do
@@ -141,6 +239,20 @@ Puppet::Type.newtype(:firewalld_zone) do
             ...
           ]
       EOT
+      def insync?(is)
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+        if @should.empty? && is == :absent then
+          return true
+        end
+
+        if match_all? then
+          return false unless is.is_a? Array
+          return false unless is.length == @should.length
+          return (is == @should or is == @should.map(&:to_s))
+        else
+          return @should.any? {|want| property_matches?(is, want) }
+        end
+      end
   end
 
   newproperty(:rich_rules, :array_matching => :all) do
@@ -198,7 +310,6 @@ Puppet::Type.newtype(:firewalld_zone) do
               limit       => string, optional
             }
       EOT
-
   end
 
 end
