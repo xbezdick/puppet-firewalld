@@ -26,7 +26,7 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
       zone = doc.add_element 'zone'
       doc << REXML::XMLDecl.new(version='1.0',encoding='utf-8')
 
-      if @resource[:target]
+      if @resource[:target] && ! @resource[:target].empty?
         zone.add_attribute('target', @resource[:target])
       end
 
@@ -43,7 +43,6 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
       if @resource[:interfaces]
         @resource[:interfaces].each do |interface|
           begin
-            Puppet.debug "should be switching zone of interface: " + interface
             zoneofinterface = exec_firewall('--get-zone-of-interface', interface)
             if (zoneofinterface.strip != @resource[:name])
               exec_firewall('--permanent', '--zone',zoneofinterface.strip, '--remove-interface', interface)
@@ -70,7 +69,6 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
         @resource[:services].each do |service|
           srv = zone.add_element 'service'
           srv.add_attribute('name', service)
-          Puppet.debug "firewalld zone provider: adding service (#{service}) to zone"
         end
       end
 
@@ -322,9 +320,9 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
             if rule.name == 'destination'
               rule_destination['address'] = rule.attributes["address"]
               if rule.attributes["invert"] == 'true'
-                rule_destination['invert'] = true
+                rule_destination['invert'] = 'true'
               else
-                rule_destination['invert'] = rule.attributes["invert"].nil? ? nil : false
+                rule_destination['invert'] = rule.attributes["invert"].nil? ? nil : 'false'
               end
               rule_destination.delete_if { |key,value| key == 'invert' and value == nil}
             end
@@ -459,6 +457,7 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
         :forward_ports => forward_ports.empty? ? nil : forward_ports,
         :rich_rules    => rich_rules.empty? ? nil : rich_rules,
       })
+
     end
     zone
   end
@@ -471,6 +470,9 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
     end
 
     def exists?
+        if resource[:target] == nil
+          resource[:target] = ''
+        end
         @property_hash[:ensure] == :present || false
     end
 end
