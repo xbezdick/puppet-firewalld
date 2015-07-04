@@ -81,7 +81,7 @@ Puppet::Type.newtype(:firewalld_zone) do
     newvalues('ACCEPT', '%%REJECT%%', 'DROP', '')
     def insync?(is)
       self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
-      if @should.empty? && is == :absent then
+      if (@should.empty? || @should == ['']) && is == :absent then
         return true
       end
 
