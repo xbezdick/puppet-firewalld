@@ -26,6 +26,16 @@ class firewalld {
   package { 'firewalld':
     ensure => present,  # install package
   }
+  if ($::operatingsystem == 'ubuntu' and $::operatingsystemmajrelease =~ /^15\.\d+$/) {
+    service { 'ufw':
+      ensure => stopped,
+      enable => false,
+    } ->
+    package { 'ufw':
+      ensure => absent
+    }
+  }
+
 
   # iptables service that comes with rhel/centos
   service { 'iptables':    # don't let this interfere
