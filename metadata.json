@@ -1,6 +1,6 @@
 {
   "name": "jpopelka-firewalld",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "author": "Jiri Popelka <jpopelka@redhat.com>",
   "summary": "Puppet Module for Firewalld",
   "license": "GPLv2+",
@@ -25,6 +25,12 @@
       "operatingsystemrelease": [
         "20",
         "21"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "15.04"
       ]
     }
   ],
