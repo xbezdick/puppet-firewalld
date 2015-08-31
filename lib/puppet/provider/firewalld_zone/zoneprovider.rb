@@ -359,7 +359,7 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
               rule_log['limit'] = limit
             end
             if rule.name == 'audit'
-              rule_audit ['limit'] = rule.elements["limit"].attributes["value"].nil? ? nil : rule.elements["limit"].attributes["value"]
+              rule_audit['limit'] = rule.elements["limit"].attributes["value"].nil? ? nil : rule.elements["limit"].attributes["value"]
             end
             if rule.name == 'accept'
               begin
@@ -395,13 +395,13 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
           rich_rules << {
             'source'        => rule_source.empty? ? nil : rule_source,
             'destination'   => rule_destination.empty? ? nil : rule_destination,
-            'service'      => rule_service.empty? ? nil : rule_service,
+            'service'       => rule_service.empty? ? nil : rule_service,
             'port'          => rule_ports.empty? ? nil : rule_ports,
             'protocol'      => rule_protocol.empty? ? nil : rule_protocol,
-            'icmp_block'   => rule_icmp_blocks.empty? ? nil : rule_icmp_blocks,
+            'icmp_block'    => rule_icmp_blocks.empty? ? nil : rule_icmp_blocks,
             'masquerade'    => rule_masquerade.nil? ? nil : rule_masquerade,
-            'forward_port' => rule_forward_ports.empty? ? nil : rule_forward_ports,
-            'log'         => rule_log.empty? ? nil : rule_log,
+            'forward_port'  => rule_forward_ports.empty? ? nil : rule_forward_ports,
+            'log'           => rule_log.empty? ? nil : rule_log,
             'audit'         => rule_audit.empty? ? nil : rule_audit,
             'action'        => rule_action.empty? ? nil : rule_action,
             'family'        => rule_family.empty? ? nil : rule_family,
@@ -424,6 +424,11 @@ Puppet::Type.type(:firewalld_zone).provide :zoneprovider, :parent => Puppet::Pro
              if rr["action"]
                rr["action"].delete_if {|key,value| key == 'limit' and value == nil}
                rr["action"].delete_if {|key,value| key == 'reject_type' and value == nil}
+             end
+             if rr["log"]
+               rr["log"].delete_if {|key,value| key == 'prefix' and value == nil}
+               rr["log"].delete_if {|key,value| key == 'level' and value == nil}
+               rr["log"].delete_if {|key,value| key == 'limit' and value == nil}
              end
              if rr["forward_port"]
                rr["forward_port"].delete_if {|key,value| key == 'to_addr' and value == nil}
