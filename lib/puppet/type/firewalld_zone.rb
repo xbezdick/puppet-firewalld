@@ -63,18 +63,18 @@ Puppet::Type.newtype(:firewalld_zone) do
     desc "The name of the zone"
     validate do |value|
       unless value =~ /^[A-Za-z0-9_]+$/
-        raise(ArgumentError, "Invalid zone name: #{name}") 
+        raise(ArgumentError, "Invalid zone name: #{name}")
       end
       if value.length > 17
         raise(ArgumentError, "Zone name longer than 17 characters: #{name}")
       end
     end
-  end 
+  end
 
   newproperty(:target) do
     desc <<-EOT
       Can be one of {'ACCEPT', '%%REJECT%%', 'DROP'}.
-      Used to accept, reject or drop every packet that 
+      Used to accept, reject or drop every packet that
       doesn't match any rule (port, service, etc.).
       Default (when target is not specified) is reject.
     EOT

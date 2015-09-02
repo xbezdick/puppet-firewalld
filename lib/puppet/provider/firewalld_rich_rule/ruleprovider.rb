@@ -130,7 +130,7 @@ Puppet::Type.type(:firewalld_rich_rule).provide :ruleprovider do
           raise(Puppet::Error, "Zone does not exist")
         end
     end
- 
+
     def destroy
         path = '/etc/firewalld/zones/' + @resource[:zone] + '.xml'
         if File.exists?(path)
@@ -186,7 +186,7 @@ Puppet::Type.type(:firewalld_rich_rule).provide :ruleprovider do
 
       # Loop through the zone elements
       doc.elements.each("zone/*") do |e|
- 
+
         if e.name == 'rule'
 
             rule_source = {}
@@ -317,11 +317,11 @@ Puppet::Type.type(:firewalld_rich_rule).provide :ruleprovider do
            rich_rules.each { |a| a.delete_if { |key,value| key == 'destination' and value == nil} }
            rich_rules.each { |a| a.delete_if { |key,value| key == 'source' and value == nil} }
            rich_rules.each { |a| a.delete_if { |key,value| key == 'port' and value == nil} }
-           
-           rich_rules.each { |rr| 
+
+           rich_rules.each { |rr|
              if rr["action"]
-               rr["action"].delete_if {|key,value| key == 'limit' and value == nil} 
-               rr["action"].delete_if {|key,value| key == 'reject_type' and value == nil} 
+               rr["action"].delete_if {|key,value| key == 'limit' and value == nil}
+               rr["action"].delete_if {|key,value| key == 'reject_type' and value == nil}
              end
              if rr["forward_port"]
                rr["forward_port"].delete_if {|key,value| key == 'to_addr' and value == nil}

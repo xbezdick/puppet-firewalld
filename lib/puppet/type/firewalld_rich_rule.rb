@@ -13,10 +13,10 @@ Puppet::Type.newtype(:firewalld_rich_rule) do
   newparam(:name) do
       desc "The name of the zone to add rich rule to"
   end
- 
+
   newparam(:zone) do
       desc "The name of the zone to add rich rule to"
-  end 
+  end
 
   newproperty(:rich_rules, :array_matching => :all) do
       desc <<-EOT
@@ -82,9 +82,9 @@ Puppet::Type.newtype(:firewalld_rich_rule) do
           }
         end
         if is.is_a?(Array) and @should.is_a?(Array)
-          @should.each { |should_el| 
-            itos(should_el) 
-            break unless is.detect { |is_el| is_el == should_el } 
+          @should.each { |should_el|
+            itos(should_el)
+            break unless is.detect { |is_el| is_el == should_el }
           }
         else
           is == @should
