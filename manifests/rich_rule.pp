@@ -41,7 +41,6 @@ define firewalld::rich_rule(
   $ensure     = present,
   $rich_rules = [],
 ) {
-
   include firewalld::configuration
 
   firewalld_rich_rule { $name:
@@ -49,6 +48,5 @@ define firewalld::rich_rule(
     zone       => $zone,
     rich_rules => $rich_rules,
     notify     => Exec['firewalld::reload'],
-    require    => Firewalld_zone[$zone],
   }
 }

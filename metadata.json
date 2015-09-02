@@ -1,6 +1,6 @@
 {
   "name": "jpopelka-firewalld",
-  "version": "0.2.3",
+  "version": "1.0.0",
   "author": "Jiri Popelka <jpopelka@redhat.com>",
   "summary": "Puppet Module for Firewalld",
   "license": "GPLv2+",
@@ -24,7 +24,8 @@
       "operatingsystem": "Fedora",
       "operatingsystemrelease": [
         "20",
-        "21"
+        "21",
+        "22"
       ]
     },
     {
