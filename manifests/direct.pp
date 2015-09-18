@@ -80,7 +80,7 @@ class firewalld::direct(
   $rules = [],
   $passthroughs = [],
 ) {
-  include firewalld::configuration
+  include ::firewalld::configuration
 
   file {
   '/etc/firewalld/direct.xml':

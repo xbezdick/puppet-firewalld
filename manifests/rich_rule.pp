@@ -16,6 +16,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 # == Define: firewalld::rich_rule
+#
+# This defines a rich_rule configuration.
+#
+# === Parameters
+# [*zone*]   zone to add the rich rule
+# [*ensure*] ensure present or absent
+# [*rich_rules*] array of rich rules
+# == Define: firewalld::rich_rule
 #  to_addr    => 'public',
 #  rich_rules  => [{
 #      family    => 'ipv4',
@@ -41,7 +49,7 @@ define firewalld::rich_rule(
   $ensure     = present,
   $rich_rules = [],
 ) {
-  include firewalld::configuration
+  include ::firewalld::configuration
 
   firewalld_rich_rule { $name:
     ensure     => $ensure,

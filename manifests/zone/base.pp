@@ -20,6 +20,9 @@
 # This class ensures that /etc/firewalld/zones/ exists.
 # It is used in firewalld::zone and doesn't need to be used on its own.
 #
+# === Parameters
+#
+# [*purge_zones*] if true purges zones not controlled by puppet firewalld
 class firewalld::zone::base (
   $purge_zones = true
 ) {

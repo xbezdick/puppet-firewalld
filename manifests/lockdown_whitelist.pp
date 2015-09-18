@@ -50,7 +50,7 @@ class firewalld::lockdown_whitelist(
   $commands = [],
   $users = [],
 ) {
-  include firewalld::configuration
+  include ::firewalld::configuration
 
   if $users != [] {
     # TODO: assert there's one (and only one of) {username, userid}

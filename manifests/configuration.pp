@@ -56,7 +56,7 @@ class firewalld::configuration (
   $ipv6_rpfilter = 'yes',
 ) {
 
-  include firewalld
+  include ::firewalld
 
   file { '/etc/firewalld/':
     ensure  => directory,            # make sure this is a directory

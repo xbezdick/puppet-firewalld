@@ -82,6 +82,7 @@
 #    reject_type => string, optional, use with 'reject' action_type only
 #    limit       => string, optional  }
 #
+# [*ensure*] ensure present or absent
 # === Examples
 #
 #  firewalld::zone { "custom":
@@ -131,8 +132,9 @@ define firewalld::zone(
   $rich_rules = [],
 ) {
 
-  include firewalld::zone::base
-  include firewalld::configuration
+  include ::firewalld::zone::base
+  include ::firewalld::configuration
+
   if $ensure == present {
     firewalld_zone { $name:
       target        => $target,
@@ -152,8 +154,8 @@ define firewalld::zone(
   #Ensure the zone file is present and not destroyed if purge_zones is set to true
   #Also Ensure that the file can be set to absent and deleted if purge_zones is set to false
   file { "/etc/firewalld/zones/${name}.xml":
-    ensure  => $ensure,
-    notify  => Exec['firewalld::reload'],
+    ensure => $ensure,
+    notify => Exec['firewalld::reload'],
   }
 }
 
