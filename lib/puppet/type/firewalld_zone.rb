@@ -1,4 +1,3 @@
-#require 'pp'
 require 'puppet'
 require 'puppet/property'
 require 'puppet/property/boolean'
@@ -97,6 +96,7 @@ Puppet::Type.newtype(:firewalld_zone) do
         raise(ArgumentError, "Zone name longer than 17 characters: #{name}")
       end
     end
+    isnamevar
   end
 
   newproperty(:target) do
@@ -403,23 +403,23 @@ Puppet::Type.newtype(:firewalld_zone) do
       :ensure => self[:ensure] == :absent ? :absent : :present,
     }
 
-    [:name, :target, :short, :description, :interfaces, :sources, :ports, :services, :icmp_blocks, :masquerade, :forward_ports].each do |param|
+    [:name, :target, :short, :description, :interfaces, :sources, :ports, :services, :icmp_blocks, :masquerade, :forward_ports ].each do |param|
       unless self[param].nil?
         file_opts[param] = self[param]
       end
     end
       file_opts[:rich_rules] = self[:rich_rules] #unless self[:rich_rules].nil? or self[:rich_rules].empty?
-    [Puppet::Type.type(:firewalld_zonefile).new(file_opts)]
+    [ Puppet::Type.type(:firewalld_zonefile).new(file_opts) ]
   end
 
   def eval_generate
     content = should_content
-
     if !content.nil? and !content.empty?
       content << [self[:rich_rules]] if !self[:rich_rules].nil? and !self[:rich_rules].empty?
       catalog.resource("Firewalld_zonefile[#{self[:name]}]")[:rich_rules] = content.flatten
     end
-    []
+    [ catalog.resource("Firewalld_zonefile[#{self[:name]}]") ]
   end
+
 end
 

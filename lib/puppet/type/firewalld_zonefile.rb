@@ -6,60 +6,7 @@ class Hash
   def deep_sort
     Hash[sort.map {|k, v| [k, v.is_a?(Hash) ? v.deep_sort : v]}]
   end
-#  def diff(other)
-#
-#    test = [self] - [other]
-#    #puts "DIFF #{test}"
-#    #(self.keys + other.keys).uniq.inject({}) do |memo, key|
-#    #  unless self[key] == other[key]
-#    #    if self[key].kind_of?(Hash) && other[key].kind_of?(Hash)
-#    #      memo[key] = self[key].diff(other[key])
-#    #    else
-#    #      memo[key] = [self[key], other[key]]
-#    #    end
-#    #  end
-#    #  memo
-#    #end
-#  end
-#  def hasdiff(one, other)
-#    (one.keys + other.keys).uniq.inject({}) do |memo, key|
-#      unless one.key?(key) && other.key?(key) && one[key] == other[key]
-#        memo[key] = [one.key?(key) ? one[key] : :_no_key, other.key?(key) ? other[key] : :_no_key]
-#      end
-#      memo
-#    end
-#  end
 end
-
-#class Array
-#  def hash_diff(other)
-#    memo_arr = []
-#    self.each do |cur_arr_val|
-#      puts "CUR_ARR_VAL: #{cur_arr_val}\n"
-#      other.each do |des_arr_val|
-#        #memo_arr << cur_arr_val.hasdiff(cur_arr_val,des_arr_val)
-#        unless cur_arr_val == des_arr_val
-#          result = cur_arr_val.diff(des_arr_val)
-#        final_result = result unless result.empty? or result.nil?
-#        memo_arr << [ cur_arr_val, des_arr_val ] if result.empty? or result.nil?
-#
-#        #(cur_arr_val.keys + des_arr_val.keys).uniq.inject({}) do |memo, key|
-#        #  unless cur_arr_val[key] == des_arr_val[key]
-#        #    if cur_arr_val[key].kind_of?(Hash) &&  des_arr_val[key].kind_of?(Hash)
-#        #      memo[key] = cur_arr_val[key].diff(des_arr_val[key])
-#        #    else
-#        #      memo[key] = [cur_arr_val[key], des_arr_val[key]]
-#        #    end
-#        #  end
-#        #  #puts memo.keys
-#        #  memo_arr << memo
-#        #end
-#      end
-#    end
-#    puts "hash_diff #{memo_arr}"
-#    memo_arr
-#  end
-#end
 
 Puppet::Type.newtype(:firewalld_zonefile) do
   desc <<-EOT
@@ -145,6 +92,7 @@ Puppet::Type.newtype(:firewalld_zonefile) do
         raise(ArgumentError, "Zone name longer than 17 characters: #{name}")
       end
     end
+    isnamevar
   end
 
   newproperty(:target) do
@@ -340,13 +288,6 @@ Puppet::Type.newtype(:firewalld_zonefile) do
           return @should.any? {|want| property_matches?(is, want) }
         end
       end
-      #def should_to_s(s)
-      #  if s.is_a?(Array)
-      #    s
-      #  else
-      #    [s]
-      #  end
-      #end
   end
 
   newproperty(:forward_ports, :array_matching => :all) do
@@ -443,7 +384,6 @@ Puppet::Type.newtype(:firewalld_zonefile) do
       defaultto([])
 
       def munge(s)
-        #puts "MUNGE #{s.inspect}"
         if s == :absent
           return []
         end
@@ -463,7 +403,6 @@ Puppet::Type.newtype(:firewalld_zonefile) do
       end
 
       def insync?(is)
-        #puts "INSYNC IS: #{is}\nSHOULD: #{@should.inspect}"
         self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
         if @should.empty? && is == :absent then
           return true
@@ -479,25 +418,9 @@ Puppet::Type.newtype(:firewalld_zonefile) do
           return @should.any? {|want| property_matches?(is, want) }
         end
 
-        #gathered_rules = gather_rich_rules_pre
-        #puts "GATHER: #{gathered_rules}"
-        #@should.push(*gathered_rules)
-        #puts "New @should: #{@should.inspect}"
-        #create_rich_rule(@should[0]) unless @should.nil? or @should.empty? or @should == :absent
-        #insync = super(is)
-        #puts "INSYNC IS: #{insync}"
-        #working#create_rich_rule(@should[0]) unless @should.nil? or @should.empty? or @should == :absent
-        #working#create_rich_rule(@should[0]) unless @should.nil? or @should.empty? or @should == :absent
-        #super(is)
-        #true
       end
 
       def change_to_s(current, desire)
-        #puts "Current: #{current.inspect}\nDesire: #{desire.inspect}"
-        #diff = current.hash_diff(desire)
-        #"Removing rich_rule(s) #{diff[0]},
-        #Adding rich_rule(s) #{diff[1]}"
-
         if current.nil? or current.empty? or current == :absent
           "Adding rich_rule(s) #{(desire).inspect}"
         elsif desire.nil? or desire.empty? or desire == :absent
@@ -513,119 +436,6 @@ Puppet::Type.newtype(:firewalld_zonefile) do
           end
         end
       end
-      #def gather_rich_rules_pre
-      #  #puts "Catalog #{@resource.catalog.inspect}"
-      #  #type = Puppet::Type.type(:firewalld_rich_rule).new(:name => 'dummyrule')
-      #  #inst = type.instances
-      #  #puts "RESOURCE NAME: #{@resource[:name]}"
-      #  rr = @resource.catalog.instance_variable_get(:@in_to).dup
-      #  rr = rr.delete_if do |k|
-      #    #puts k
-      #    k.class != Puppet::Type::Firewalld_rich_rule
-      #  end
-      #  rich_rules = []
-      #  zone = nil
-      #  #puts "Vertices #{@resource.catalog.instance_variable_get(:@in_to)}"
-      #  rr.each do |k,v|
-      #    if (zone = k[:zone]) == @resource[:name]
-      #      rich_rules = k[:rich_rules]
-      #      #puts "rr k:"
-      #      #puts zone
-      #      #puts rich_rules
-      #      #puts "done rr k:"
-      #    end
-      #  end
-      #  rich_rules
-      #end
-      #def create_firewalld_rich_rules(s)
-      #  s.sort_by { |key, value| key }
-      #  name = flat_hash(s).flatten.flatten.join
-      #  rich_rule_hash = Hash.new
-      #  rich_rule_hash[:name] = name
-      #  rich_rule_hash[:zone] = @resource[:name]
-      #  rich_rule_hash[:rich_rules] = s
-      #  puts rich_rule_hash.inspect
-      #end
-      #def create_rich_rule(s)
-      #  #puts "Catalog #{@resource.catalog}"
-      #  puts "Catalog Resource!: #{provider.resource}"
-      #  s.sort_by { |key, value| key }
-      #  type = 'firewalld_rich_rule'
-      #  #name = flat_hash(s).flatten.flatten.join
-      #  name = s.merge({"zone"=>@resource[:name]}).deep_sort
-      #  resource_key = [type, name].join('/')
-      #  puts "NAME: #{name}\nRESO: #{resource_key}"
-      #  rich_rule_hash = Hash.new
-      #  rich_rule_hash[:name] = name
-      #  rich_rule_hash[:zone] = @resource[:name]
-      #  rich_rule_hash[:rich_rules] = [s]
-      #  puts rich_rule_hash.inspect
-
-      #  #Puppet::Type.type('firewalld_rich_rule').newfirewalld_rich_rule(rich_rule_hash)
-      #  rsrc = Puppet::Resource.new(type, name, :parameters => rich_rule_hash)
-      #  result = Puppet::Resource.indirection.save(rsrc, resource_key)
-      #  #puts "Resource result: #{result}"
-
-      #  failed = result[1].resource_statuses[rsrc.to_s].events.any? do |event|
-      #    event.status == "failure"
-      #  end
-
-      #  if failed
-      #    events = result[1].resource_statuses[rsrc.to_s].events.map do |event|
-      #      "#{event.property}: #{event.message}"
-      #    end.join('; ')
-      #    fail(events)
-      #  end
-      #  true unless failed
-      #end
-      #def create_rich_rule_pre(s)
-      #  puts "Munge Catalog #{@resource.catalog}"
-      #  s.sort_by { |key, value| key }
-      #  type = 'firewalld_rich_rule'
-      #  name = flat_hash(s).flatten.flatten.join
-      #  resource_key = [type, name].join('/')
-      #  rich_rule_hash = Hash.new
-      #  rich_rule_hash[:name] = 'rcgzone_rule2'
-      #  #rich_rule_hash[:name] = name
-      #  rich_rule_hash[:zone] = @resource[:name]
-      #  rich_rule_hash[:rich_rules] = [s]
-      #  puts rich_rule_hash.inspect
-
-      #  Puppet::Type.type('firewalld_rich_rule').newfirewalld_rich_rule(rich_rule_hash)
-      #  puts "Munge, made resource"
-      #  #rsrc = Puppet::Resource.new(type, name, :parameters => rich_rule_hash)
-      #  #result = Puppet::Resource.indirection.save(rsrc, resource_key)
-      #  #puts "Resource result: #{result}"
-
-      #  #failed = result[1].resource_statuses[rsrc.to_s].events.any? do |event|
-      #  #  event.status == "failure"
-      #  #end
-
-      #  #if failed
-      #  #  events = result[1].resource_statuses[rsrc.to_s].events.map do |event|
-      #  #    "#{event.property}: #{event.message}"
-      #  #  end.join('; ')
-      #  #  fail(events)
-      #  #end
-      #end
-      #def flat_hash(h,f=[],g={})
-      #  return g.update({ f=>h }) unless h.is_a? Hash
-      #  h.each { |k,r| flat_hash(r,f+[k],g) }
-      #  g
-      #end
   end
 
-  #autorequire(:file) do
-  #  ["/etc/firewalld/zones/#{self[:name]}.xml"]
-  #end
-  #autorequire(:firewalld_rich_rule) do
-  #  catalog.resources.collect do |r|
-  #    r.name if r.is_a?(Puppet::Type.type(:firewalld_rich_rule)) && r[:zone] == self[:name]
-  #  end.compact
-  #end
-
-  #def generate
-  #  puts "RUNNING GENERATE"
-  #end
 end
-

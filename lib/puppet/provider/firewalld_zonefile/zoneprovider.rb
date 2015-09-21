@@ -212,10 +212,6 @@ Puppet::Type.type(:firewalld_zonefile).provide :zoneprovider, :parent => Puppet:
     Puppet.debug "firewalld zonefile provider: Changes to #{path} configuration saved to disk."
     #Reload is now done from a notify command in the puppet code
 
-    # TEMPORARY: FIXME:
-    # We are doing `firewall-cmd --reload` here because we broke notify metaparam in 1.0.0 release on clients using a puppet master
-    # We will be fixing this breakage soon enough, but until then, this will suffice.
-    exec_firewall('--reload')
   end
 
   # Utilized code from crayfishx/puppet-firewalld as the firewall-cmd needs it's arguments properly formatted
