@@ -265,6 +265,10 @@ Puppet::Type.type(:firewalld_zonefile).provide :zoneprovider, :parent => Puppet:
   end
 
   def consistent?
+    default_zone = firewall("--get-default-zone").chomp
+    if default_zone != @resource[:name]
+      return true
+    end
     iptables_allow = []
     iptables_deny = []
     firewallcmd_accept = []
@@ -283,6 +287,11 @@ Puppet::Type.type(:firewalld_zonefile).provide :zoneprovider, :parent => Puppet:
 
     begin
       firewallcmd = firewall("--zone=#{@resource[:name]}", '--list-all').split("\n")
+      services = firewallcmd.select { |val| /services:/ =~ val }.map do |val|
+        # HACK: dhcpv6-client is ipv6 only and we check ipv4 iptables only
+        val.sub('services:','').sub('dhcpv6-client','').split(" ").map{|service| read_service_ports(service)}
+      end
+
       firewallcmd.select! { |val| /\srule family/ =~ val }
       firewallcmd_exp = firewallcmd.map do |val|
         arr = []
@@ -295,22 +304,18 @@ Puppet::Type.type(:firewalld_zonefile).provide :zoneprovider, :parent => Puppet:
         end
         arr.empty? ? val : arr
       end
-
       firewallcmd_exp.flatten!
-
       firewallcmd_accept = firewallcmd_exp.select { |val| /accept\Z/ =~ val }
       firewallcmd_deny = firewallcmd_exp.select { |val| /reject\Z|drop\Z/ =~ val }
     rescue
     end
-
-
-    unless iptables_allow.count == firewallcmd_accept.count && iptables_deny.count == firewallcmd_deny.count
-      Puppet.debug("Consistency issue between iptables and firewalld zone #{@property_hash[:name]}:\niptables_allow.count: #{iptables_allow.count}\nfirewallcmd_accept.count: #{firewallcmd_accept.count}\niptables_deny.count: #{iptables_deny.count}\nfirewallcmd_deny.count: #{firewallcmd_deny.count}")
+    unless iptables_allow.count == (services.flatten.count + firewallcmd_accept.count) && iptables_deny.count == firewallcmd_deny.count
+      Puppet.debug("Consistency issue between iptables and firewalld zone #{@property_hash[:name]}:\niptables_allow.count: #{iptables_allow.count}\nfirewallcmd_accept.count: #{firewallcmd_accept.count}\nservices count: #{services.flatten.count}\niptables_deny.count: #{iptables_deny.count}\nfirewallcmd_deny.count: #{firewallcmd_deny.count}")
     end
 
     # Technically the IPTables allow list and the firewallcmd_accept list(as well as deny lists) numbering lines up
     # and we could do a regex comparison to verify that the EXACT values existed if we wanted to iptables_allow[index] =~ /...firewallcmd_accept[index].../ for example
-    iptables_allow.count == firewallcmd_accept.count && iptables_deny.count == firewallcmd_deny.count
+    iptables_allow.count == (services.flatten.count + firewallcmd_accept.count) && iptables_deny.count == firewallcmd_deny.count
   end
 
   def read_service_ports(service_name)
