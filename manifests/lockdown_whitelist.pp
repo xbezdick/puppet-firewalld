@@ -52,9 +52,9 @@ class firewalld::lockdown_whitelist(
 ) {
   include ::firewalld::configuration
 
-  if $users != [] {
-    # TODO: assert there's one (and only one of) {username, userid}
-  }
+#  if $users != [] {
+#    # TODO: assert there's one (and only one of) {username, userid}
+#  }
 
   file {
     '/etc/firewalld/lockdown-whitelist.xml':

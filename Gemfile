@@ -15,6 +15,10 @@ group :development, :test do
   gem 'puppet-lint-leading_zero-check'
   gem 'puppet-lint-variable_contains_upcase'
   gem 'puppet-lint-numericvariable'
+
+  gem 'rspec', :require => false
+  gem 'beaker-rspec', :require => false
+  gem 'beaker-puppet_install_helper', :require => false
 end
 
 if puppetversion = ENV['PUPPET_GEM_VERSION']
