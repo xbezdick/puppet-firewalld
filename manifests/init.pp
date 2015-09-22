@@ -59,9 +59,12 @@ class firewalld {
     ],
   }
 
+  # HACK: we reload twice as firewalld fails on reload if you remove zone file without
+  # calling firewall-cmd --permanent --delete-zone <zone>. In that case it blocks all
+  # connections and another reload is needed.
   exec{ 'firewalld::reload':
     path        =>'/usr/bin:/bin',
-    command     => 'firewall-cmd --reload',
+    command     => 'firewall-cmd --reload; firewall-cmd --reload',
     refreshonly => true,
   }
 
